@@ -1,3 +1,4 @@
+# Trigger Terraform pipeline
 # Explanation: Configure the AWS provider and specify the region.
 terraform {
   required_providers {
