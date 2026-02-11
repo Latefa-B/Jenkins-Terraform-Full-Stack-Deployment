@@ -1,12 +1,11 @@
 pipeline {
     agent {
-        label 'docker-agent' // Runs on agent with Terraform + AWS CLI
+        label 'docker-agent'
     }
 
     environment {
         AWS_REGION      = 'us-east-1'
         AWS_ACCOUNT_ID  = '694862618269'
-        // This variable will be passed to Terraform
         TF_VAR_environment_tag = 'dev'
     }
 
@@ -14,9 +13,12 @@ pipeline {
 
         stage('Checkout Terraform Code') {
             steps {
-                dir('jenkins-terraform-infra-repo') { // Put Terraform code in this folder
-                    deleteDir()   // 🔥 force clean checkout
-                    git branch: 'latefa-branch', url: 'https://github.com/Latefa-B/jenkins-terraform-infra.git', changelog: false, poll: false
+                dir('jenkins-terraform-infra-repo') {
+                    deleteDir()  // ensure clean clone
+                    git branch: 'latefa-branch',
+                        url: 'https://github.com/Latefa-B/jenkins-terraform-infra.git',
+                        changelog: false,
+                        poll: false
                 }
             }
         }
@@ -27,17 +29,20 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    script {
-                        echo "--- Initializing Terraform ---"
-                        sh """
-                          terraform init \
-                            -backend-config="bucket=jenkins-terraform-state-${AWS_ACCOUNT_ID}" \
-                            -backend-config="key=s3-bucket-infra/terraform.tfstate" \
-                            -backend-config="region=${AWS_REGION}" \
-                            -backend-config="encrypt=true" \
-                            -backend-config="dynamodb_table=terraform-lock-table"
-                        """
-                        echo "--- Terraform Init Complete ---"
+                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
+                        script {
+                            sh 'ls -la'   // debug (optional)
+
+                            echo "--- Initializing Terraform ---"
+                            sh """
+                              terraform init \
+                                -backend-config="bucket=jenkins-terraform-state-${AWS_ACCOUNT_ID}" \
+                                -backend-config="key=s3-bucket-infra/terraform.tfstate" \
+                                -backend-config="region=${AWS_REGION}" \
+                                -backend-config="encrypt=true" \
+                                -backend-config="dynamodb_table=terraform-lock-table"
+                            """
+                        }
                     }
                 }
             }
@@ -49,26 +54,20 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    script {
-                        echo "--- Running Terraform Plan ---"
-                        sh """
-                          terraform plan \
-                            -out=tfplan.out \
-                            -var="aws_region=${AWS_REGION}" \
-                            -var="environment_tag=${TF_VAR_environment_tag}"
-                        """
-                        echo "--- Terraform Plan Complete ---"
+                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
+                        script {
+                            echo "--- Running Terraform Plan ---"
+                            sh """
+                              terraform plan \
+                                -out=tfplan.out \
+                                -var="aws_region=${AWS_REGION}" \
+                                -var="environment_tag=${TF_VAR_environment_tag}"
+                            """
+                        }
                     }
                 }
             }
         }
-
-        // Optional Manual Approval (Recommended for Production)
-        // stage('Manual Approval for Apply') {
-        //     steps {
-        //         input message: 'Approve Terraform Apply?', ok: 'Approve'
-        //     }
-        // }
 
         stage('Terraform Apply') {
             steps {
@@ -76,10 +75,11 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    script {
-                        echo "--- Applying Terraform Changes ---"
-                        sh "terraform apply -auto-approve tfplan.out"
-                        echo "--- Terraform Apply Complete ---"
+                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
+                        script {
+                            echo "--- Applying Terraform Changes ---"
+                            sh "terraform apply -auto-approve tfplan.out"
+                        }
                     }
                 }
             }
