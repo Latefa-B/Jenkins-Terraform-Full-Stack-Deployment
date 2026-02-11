@@ -7,14 +7,15 @@ pipeline {
         AWS_REGION      = 'us-east-1'
         AWS_ACCOUNT_ID  = '694862618269'
         TF_VAR_environment_tag = 'dev'
+        TERRAFORM_DIR   = 'jenkins-terraform-infra'
     }
 
     stages {
 
         stage('Checkout Terraform Code') {
             steps {
-                dir('jenkins-terraform-infra-repo') {
-                    deleteDir()  // ensure clean clone
+                dir("${TERRAFORM_DIR}") {
+                    deleteDir()  // Ensure clean workspace
                     git branch: 'latefa-branch',
                         url: 'https://github.com/Latefa-B/jenkins-terraform-infra.git',
                         changelog: false,
@@ -29,20 +30,16 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
-                        script {
-                            sh 'ls -la'   // debug (optional)
-
-                            echo "--- Initializing Terraform ---"
-                            sh """
-                              terraform init \
-                                -backend-config="bucket=jenkins-terraform-state-${AWS_ACCOUNT_ID}" \
-                                -backend-config="key=s3-bucket-infra/terraform.tfstate" \
-                                -backend-config="region=${AWS_REGION}" \
-                                -backend-config="encrypt=true" \
-                                -backend-config="dynamodb_table=terraform-lock-table"
-                            """
-                        }
+                    dir("${TERRAFORM_DIR}") {
+                        echo "--- Initializing Terraform ---"
+                        sh """
+                          terraform init \
+                            -backend-config="bucket=jenkins-terraform-state-${AWS_ACCOUNT_ID}" \
+                            -backend-config="key=s3-bucket-infra/terraform.tfstate" \
+                            -backend-config="region=${AWS_REGION}" \
+                            -backend-config="encrypt=true" \
+                            -backend-config="dynamodb_table=terraform-lock-table"
+                        """
                     }
                 }
             }
@@ -54,16 +51,14 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
-                        script {
-                            echo "--- Running Terraform Plan ---"
-                            sh """
-                              terraform plan \
-                                -out=tfplan.out \
-                                -var="aws_region=${AWS_REGION}" \
-                                -var="environment_tag=${TF_VAR_environment_tag}"
-                            """
-                        }
+                    dir("${TERRAFORM_DIR}") {
+                        echo "--- Running Terraform Plan ---"
+                        sh """
+                          terraform plan \
+                            -out=tfplan.out \
+                            -var="aws_region=${AWS_REGION}" \
+                            -var="environment_tag=${TF_VAR_environment_tag}"
+                        """
                     }
                 }
             }
@@ -75,11 +70,9 @@ pipeline {
                     [$class: 'AmazonWebServicesCredentialsBinding',
                      credentialsId: 'aws-credentials']
                 ]) {
-                    dir('jenkins-terraform-infra-repo') {   // ✅ CRITICAL FIX
-                        script {
-                            echo "--- Applying Terraform Changes ---"
-                            sh "terraform apply -auto-approve tfplan.out"
-                        }
+                    dir("${TERRAFORM_DIR}") {
+                        echo "--- Applying Terraform Changes ---"
+                        sh "terraform apply -auto-approve tfplan.out"
                     }
                 }
             }
@@ -91,10 +84,10 @@ pipeline {
             echo "Pipeline finished. Status: ${currentBuild.result}"
         }
         success {
-            echo "Congratulations! Terraform deployment succeeded."
+            echo "✅ Terraform deployment succeeded."
         }
         failure {
-            echo "Terraform deployment failed. Please check logs."
+            echo "❌ Terraform deployment failed. Please check logs."
         }
     }
 }
