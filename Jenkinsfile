@@ -15,6 +15,7 @@ pipeline {
         stage('Checkout Terraform Code') {
             steps {
                 dir('jenkins-terraform-infra-repo') { // Put Terraform code in this folder
+                    deleteDir()   // 🔥 force clean checkout
                     git branch: 'latefa-branch', url: 'https://github.com/Latefa-B/jenkins-terraform-infra.git', changelog: false, poll: false
                 }
             }
