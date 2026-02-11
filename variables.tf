@@ -16,3 +16,11 @@ variable "eks_cluster_name_for_vpc_lookup" {
   default     = "aws-default" # <<< REPLACE THIS if you changed EKS cluster name
 }
 
+# ... (existing variables) ...
+
+variable "app_version_content" {
+  description = "Content to store in the S3 object for app version"
+  type        = string
+  default     = "initial-version"
+}
+

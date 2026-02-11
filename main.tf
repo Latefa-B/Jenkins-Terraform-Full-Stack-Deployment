@@ -1,5 +1,4 @@
-# Trigger Terraform pipeline
-# Explanation: Configure the AWS provider and specify the region.
+# Terraform configuration for AWS provider and backend
 terraform {
   required_providers {
     aws = {
@@ -7,15 +6,13 @@ terraform {
       version = "~> 5.0"
     }
   }
-  # Explanation: Configure the remote backend for Terraform state.
-  # This bucket will store your Terraform state file securely.
-  # Replace YOUR_AWS_ACCOUNT_ID and YOUR_AWS_REGION.
+
   backend "s3" {
-    bucket         = "jenkins-terraform-state-694862618269" # <<< REPLACE THIS! Must be globally unique.
+    bucket         = "jenkins-terraform-state-694862618269" # Globally unique
     key            = "s3-bucket-infra/terraform.tfstate"
-    region         = "us-east-1" # <<< REPLACE THIS!
-    encrypt        = true # Encrypt state file at rest
-    dynamodb_table = "terraform-lock-table" # For state locking (prevent concurrent applies)
+    region         = "us-east-1"
+    encrypt        = true
+    dynamodb_table = "terraform-lock-table"
   }
 }
 
@@ -23,45 +20,77 @@ provider "aws" {
   region = var.aws_region
 }
 
-# Explanation: Get the current AWS caller identity for account ID.
+# Get current AWS account info
 data "aws_caller_identity" "current" {}
 
-# Explanation: Get existing VPC and public subnets from your EKS cluster (Lab 14).
-# This ensures our S3 bucket is in the same region.
+# Get existing VPC for reference
 data "aws_vpc" "existing_vpc" {
   tags = {
-    Name = var.eks_cluster_name_for_vpc_lookup # From variables.tf
+    Name = var.eks_cluster_name_for_vpc_lookup
   }
 }
 
-# Explanation: Define the S3 bucket resource.
+# -----------------------------
+# Existing Jenkins-managed S3 bucket
+# -----------------------------
 resource "aws_s3_bucket" "my_jenkins_managed_bucket" {
-  bucket = "my-jenkins-managed-bucket-${data.aws_caller_identity.current.account_id}" # Unique bucket name
-  acl    = "private" # Keep it private
+  bucket = "my-jenkins-managed-bucket-${data.aws_caller_identity.current.account_id}"
+  acl    = "private"
 
   versioning {
-    enabled = true # Keep versions of objects
+    enabled = true
   }
 
   tags = {
-    Name = "JenkinsManagedBucket"
-    Environment = var.environment_tag # From variables.tf
+    Name        = "JenkinsManagedBucket"
+    Environment = var.environment_tag
   }
 }
 
-# Explanation: Block public access to the S3 bucket.
 resource "aws_s3_bucket_public_access_block" "my_jenkins_managed_bucket_public_access_block" {
-  bucket = aws_s3_bucket.my_jenkins_managed_bucket.id
-
+  bucket                  = aws_s3_bucket.my_jenkins_managed_bucket.id
   block_public_acls       = true
   block_public_policy     = true
   ignore_public_acls      = true
   restrict_public_buckets = true
 }
 
-# Explanation: Output the S3 bucket name.
 output "s3_bucket_name" {
   description = "Name of the S3 bucket managed by Jenkins Terraform"
   value       = aws_s3_bucket.my_jenkins_managed_bucket.bucket
 }
 
+# -----------------------------
+# New S3 bucket to store application version info
+# -----------------------------
+resource "aws_s3_bucket" "app_version_bucket" {
+  bucket = "app-version-bucket-${data.aws_caller_identity.current.account_id}"
+  acl    = "private"
+
+  tags = {
+    Name        = "AppVersionBucket"
+    Environment = var.environment_tag
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "app_version_bucket_public_access_block" {
+  bucket                  = aws_s3_bucket.app_version_bucket.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_object" "app_version_file" {
+  bucket       = aws_s3_bucket.app_version_bucket.id
+  key          = "current-app-version.txt"
+  content      = var.app_version_content       # From Jenkins pipeline
+  content_type = "text/plain"
+  acl          = "private"
+  etag         = filemd5("version_placeholder.txt") # Initial placeholder
+}
+
+output "app_version_bucket_name" {
+  description = "Name of the S3 bucket storing app version"
+  value       = aws_s3_bucket.app_version_bucket.bucket
+}
