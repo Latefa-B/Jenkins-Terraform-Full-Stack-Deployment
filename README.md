@@ -18,7 +18,7 @@ This comprehensive step-by-step guide walks you through the process of Deploying
 - The concept of Infrastructure as Code (IaC) within an application pipeline.
 - The complete end-to-end flow of a full-stack DevOps pipeline.
 
-### Prerequisites
+## Prerequisites
 - Jenkins master server and docker-agent should be running and accessible. The docker-agent should have Docker, AWS CLI, kubectl, helm, and terraform installed.
 - AWS EKS cluster should be running.
 - AWS ECR repository (my-flask-app-repo) should exist.
@@ -28,8 +28,8 @@ This comprehensive step-by-step guide walks you through the process of Deploying
 - AWS credentials configured in Jenkins with sufficient IAM permissions for ECR, EKS, and S3 (for the app-version bucket).
 - The S3 bucket and DynamoDB table for Terraform state (jenkins-terraform-state-YOUR_AWS_ACCOUNT_ID and terraform-lock-table) should exist.
 
-### Step-by-step instructions
-## Step 1: Prepare Your Terraform Code for Application Versioning
+## Step-by-step instructions
+### Step 1: Prepare Your Terraform Code for Application Versioning
 We will modify your jenkins-terraform-infra repository to include a small Terraform resource that manages an S3 object. This S3 object will store the current application version (Jenkins build number), demonstrating how infrastructure can be updated by the application pipeline. To complete Step 1, follow the instructions below : 
 - Navigate to your jenkins-terraform-infra-repo folder locally.
 - Open main.tf.
