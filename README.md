@@ -19,33 +19,32 @@ This comprehensive step-by-step guide walks you through the process of Deploying
 - The complete end-to-end flow of a full-stack DevOps pipeline.
 
 ### Prerequisites
-Your Jenkins master server and docker-agent should be running and accessible (from Lab 4/5/6/7). The docker-agent should have Docker, AWS CLI, kubectl, helm, and terraform installed.
-Your AWS EKS cluster from Lab 14 should be running.
-Your AWS ECR repository (my-flask-app-repo) from Lab 6 should exist.
-Your AWS RDS PostgreSQL database from Lab 15 should be running (and you have its endpoint).
-Your GitHub repository for application code (jenkins-git-app) containing app.py, Dockerfile, my-flask-chart/, and the Jenkinsfile from Lab 6.
-Your GitHub repository for Terraform infrastructure (jenkins-terraform-infra) from Lab 7, which manages the S3 bucket and DynamoDB table for Terraform state.
-AWS credentials configured in Jenkins (from Lab 5) with sufficient IAM permissions for ECR, EKS, and S3 (for the app-version bucket).
-The S3 bucket and DynamoDB table for Terraform state (jenkins-terraform-state-YOUR_AWS_ACCOUNT_ID and terraform-lock-table) should exist (manually created in Lab 7).
-Step 1: Prepare Your Terraform Code for Application Versioning
+- Jenkins master server and docker-agent should be running and accessible. The docker-agent should have Docker, AWS CLI, kubectl, helm, and terraform installed.
+- AWS EKS cluster should be running.
+- AWS ECR repository (my-flask-app-repo) should exist.
+- AWS RDS PostgreSQL database should be running
+- GitHub repository for application code (jenkins-git-app) containing app.py, Dockerfile, my-flask-chart/, and the Jenkinsfile file.
+- Your GitHub repository for Terraform infrastructure (jenkins-terraform-infra), which manages the S3 bucket and DynamoDB table for Terraform state.
+- AWS credentials configured in Jenkins with sufficient IAM permissions for ECR, EKS, and S3 (for the app-version bucket).
+- The S3 bucket and DynamoDB table for Terraform state (jenkins-terraform-state-YOUR_AWS_ACCOUNT_ID and terraform-lock-table) should exist.
+
+### Step-by-step instructions
+## Step 1: Prepare Your Terraform Code for Application Versioning
 We will modify your jenkins-terraform-infra repository to include a small Terraform resource that manages an S3 object. This S3 object will store the current application version (Jenkins build number), demonstrating how infrastructure can be updated by the application pipeline. To complete Step 1, follow the instructions below : 
-Navigate to your jenkins-terraform-infra-repo folder locally.
-Open main.tf.
-Add a new S3 bucket and an S3 object resource to main.tf. This bucket will store a simple text file with the deployed app version.
-
-Create a dummy file named version_placeholder.txt in the same directory as main.tf. This is needed for filemd5 to work initially. You can put any content in it, like 0.0.0.
-Update jenkins-terraform-infra-repo/variables.tf to include the new variable for the application version content.
-Save all files.
-
-Commit and push these changes to your jenkins-terraform-infra GitHub repository:
+- Navigate to your jenkins-terraform-infra-repo folder locally.
+- Open main.tf.
+- Add a new S3 bucket and an S3 object resource to main.tf. This bucket will store a simple text file with the deployed app version.
+- Create a dummy file named version_placeholder.txt in the same directory as main.tf. This is needed for filemd5 to work initially. You can put any content in it, like 0.0.0.
+- Update jenkins-terraform-infra-repo/variables.tf to include the new variable for the application version content.
+- Save all files.
+- Commit and push these changes to your jenkins-terraform-infra GitHub repository:
 cd jenkins-terraform-infra-repo 
 git add . 
 git commit -m "Add S3 bucket and object for app version tracking" 
 git push origin <your-branch-name>
+- Manually run terraform apply once locally from this directory to provision the new app_version_bucket and app_version_file. This is important so the bucket exists before Jenkins tries to update the object.
 
-
-Manually run terraform apply once locally from this directory to provision the new app_version_bucket and app_version_file. This is important so the bucket exists before Jenkins tries to update the object.
-Step 2: Update Jenkinsfile for Full Stack Orchestration
+## Step 2: Update Jenkinsfile for Full Stack Orchestration
 We will modify your Jenkinsfile in the jenkins-docker-app repository to orchestrate the entire flow: building the app, pushing to ECR, updating the Terraform-managed S3 object with the new app version, and finally deploying the Helm Chart to EKS. This Jenkinsfile will need to checkout both the application repo and the infrastructure repo. To complete Step 2, follow the instructions below : 
 Navigate to your jenkins-git-app folder locally.
 Open your Jenkinsfile.
