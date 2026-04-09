@@ -3,13 +3,13 @@
 Jenkins is one of the most widely used and powerful tools in the DevOps world for implementing Continuous Integration (CI) and Continuous Delivery (CD) pipelines. As an open-source automation server, it enables teams to build, test, and deploy software efficiently through automated workflows. Highly extensible by design, Jenkins supports a vast range of plugins that integrate seamlessly with various tools and technologies. It serves as a centralized automation platform that orchestrates and streamlines repetitive tasks involved in software development, such as : Building software (compiling code), Testing software (running automated tests), Deploying software (sending it to servers or Kubernetes clusters) and Monitoring the execution of these tasks. Enhancing productivity, consistency, and delivery speed.
 
 Previously, we have successfully mastered individual tools and integrated them in various ways. In this final, comprehensive lab, you will orchestrate a full-stack CI/CD pipeline using Jenkins that touches every major technology we've covered:
-**- Source Code Management (Git): For application and infrastructure code.**
-**- Containerization (Docker): For packaging your application.**
-**- Cloud Infrastructure (AWS & Terraform): For provisioning and managing your EKS cluster, RDS, and a small application-specific S3 resource.**
-**- Container Orchestration (Kubernetes): As the deployment target for your application.**
-**- Package Management (Helm): For deploying your application to Kubernetes.**
-**- Automation Server (Jenkins): Orchestrating the entire workflow.**
-**- Scripting : Within the Jenkinsfile for pipeline logic.**
+- **Source Code Management (Git)**: For application and infrastructure code.
+- **Containerization (Docker)**: For packaging your application.
+- **Cloud Infrastructure (AWS & Terraform)**: For provisioning and managing your EKS cluster, RDS, and a small application-specific S3 resource.
+- **Container Orchestration (Kubernetes)**: As the deployment target for your application.
+- **Package Management (Helm)**: For deploying your application to Kubernetes.
+- **utomation Server (Jenkins)**: Orchestrating the entire workflow.
+- **Scripting**: Within the Jenkinsfile for pipeline logic.
 
 This comprehensive step-by-step guide walks you through the process of Deploying a  Full Stack Deployment (App & Infra Orchestration) using Jenkins as a CI/CD engine. In this lab, your Jenkins pipeline will now not only build and deploy your application but also perform a small, version-stamped infrastructure update using Terraform, demonstrating true end-to-end automation of both application and infrastructure changes. The aim of this lab is to learn : 
 - How to orchestrate a complex CI/CD pipeline involving multiple Git repositories.
