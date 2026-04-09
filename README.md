@@ -51,13 +51,13 @@ We will modify your Jenkinsfile in the jenkins-docker-app repository to orchestr
 - Open your Jenkinsfile.
 - Update the Jenkinsfile with the following content:
 
-YOUR_DOCKERHUB_USERNAME: Your Docker Hub username.
-YOUR_AWS_ACCOUNT_ID: Your AWS account ID.
-YOUR_AWS_REGION: Your AWS region (e.g., us-east-1).
-YOUR_EKS_CLUSTER_NAME: The name of your EKS cluster (default was my-k8s-cluster).
-YOUR_RDS_ENDPOINT: The rds_endpoint value you obtained from terraform previously.
-YOUR_GITHUB_USERNAME: Your GitHub username.
-YOUR_TERRAFORM_REPO_NAME: The name of your Terraform infrastructure repository.
+* YOUR_DOCKERHUB_USERNAME: Your Docker Hub username.
+* YOUR_AWS_ACCOUNT_ID: Your AWS account ID.
+* YOUR_AWS_REGION: Your AWS region (e.g., us-east-1).
+* YOUR_EKS_CLUSTER_NAME: The name of your EKS cluster (default was my-k8s-cluster).
+* YOUR_RDS_ENDPOINT: The rds_endpoint value you obtained from terraform previously.
+* YOUR_GITHUB_USERNAME: Your GitHub username.
+* YOUR_TERRAFORM_REPO_NAME: The name of your Terraform infrastructure repository.
 
 - Save Jenkinsfile.
 - Commit and push the updated Jenkinsfile to your GitHub repository:
